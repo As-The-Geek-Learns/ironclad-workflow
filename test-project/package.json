@@ -1,0 +1,14 @@
+{
+  "name": "workflow-test-project",
+  "version": "1.0.0",
+  "description": "Minimal project to test the Ironclad Development Workflow",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "node test/calculator.test.js",
+    "lint": "echo Lint passed",
+    "verify": "node ../scripts/verify.js",
+    "ship": "node ../scripts/ship.js"
+  },
+  "keywords": [],
+  "license": "MIT"
+}

@@ -1,0 +1,24 @@
+{
+  "name": "ironclad-workflow",
+  "version": "1.1.0",
+  "description": "A structured 4-phase development workflow with AI code review: PLAN -> EXECUTE -> VERIFY -> SHIP",
+  "scripts": {
+    "verify": "node scripts/verify.js",
+    "verify:no-ai": "node scripts/verify.js --skip-ai-review",
+    "ai-review": "node scripts/ai-review.js",
+    "ai-review:security": "node scripts/ai-review.js --security-focus",
+    "ai-review:diff": "node scripts/ai-review.js --diff",
+    "ship": "node scripts/ship.js",
+    "ship:pr": "node scripts/ship.js --create-pr"
+  },
+  "keywords": [
+    "workflow",
+    "development",
+    "security",
+    "verification",
+    "ai-review",
+    "gemini"
+  ],
+  "author": "",
+  "license": "MIT"
+}
