@@ -23,3 +23,5 @@ Thumbs.db
 
 # Evidence files (screenshots, logs)
 .workflow/evidence/
+# Editor-specific files
+.cursor/
