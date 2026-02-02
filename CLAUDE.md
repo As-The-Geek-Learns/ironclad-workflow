@@ -1,4 +1,4 @@
-# WorkflowExperiment — Ironclad Development Workflow
+# Ironclad Workflow
 
 ## Project Overview
 
@@ -26,7 +26,7 @@ tracking. Inspired by Claudikins Kernel, designed as an editor-agnostic workflow
 ## Project Structure
 
 ```
-WorkflowExperiment/
+ironclad-workflow/
 ├── .workflow/
 │   ├── checklists/            # Security + verification checklists
 │   ├── templates/             # Plan, session, PR templates

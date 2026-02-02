@@ -9,7 +9,7 @@
 
 ## Overview
 
-Evaluated the WorkflowExperiment project, initialized git version control, created supporting documentation (project CLAUDE.md, .env.example), made the initial commit, pushed to GitHub, and configured the Gemini API key for AI code review.
+Evaluated the Ironclad Workflow project, initialized git version control, created supporting documentation (project CLAUDE.md, .env.example), made the initial commit, pushed to GitHub, and configured the Gemini API key for AI code review.
 
 ---
 

@@ -1,4 +1,4 @@
-# Ironclad Development Workflow
+# Ironclad Workflow
 
 A structured 4-phase workflow framework that enforces quality through planning gates, AI code review, verification checkpoints, and file integrity tracking.
 
@@ -138,9 +138,9 @@ AI review results are saved to `.workflow/state/ai-review.json`:
 
 ```bash
 # Copy the workflow files to your project
-cp -r WorkflowExperiment/.workflow your-project/
-cp -r WorkflowExperiment/.cursor your-project/
-cp -r WorkflowExperiment/scripts your-project/
+cp -r ironclad-workflow/.workflow your-project/
+cp -r ironclad-workflow/.cursor your-project/
+cp -r ironclad-workflow/scripts your-project/
 ```
 
 ### 2. Set Up API Key

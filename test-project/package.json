@@ -1,7 +1,7 @@
 {
   "name": "workflow-test-project",
   "version": "1.0.0",
-  "description": "Minimal project to test the Ironclad Development Workflow",
+  "description": "Minimal project to test the Ironclad Workflow",
   "main": "src/index.js",
   "scripts": {
     "test": "node test/calculator.test.js",
