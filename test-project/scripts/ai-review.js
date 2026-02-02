@@ -285,23 +285,54 @@ async function callGemini(prompt, codeContext) {
       reject(new Error('Request failed: ' + error.message));
     });
 
+    req.setTimeout(30000, () => {
+      req.destroy();
+      reject(new Error('Gemini API request timed out after 30 seconds'));
+    });
+
     req.write(requestBody);
     req.end();
   });
 }
 
 function parseGeminiResponse(response) {
-  // Try to extract JSON from the response
+  // Strategy 1: Try parsing the full response as JSON directly
   try {
-    // Look for JSON block in response
-    const jsonMatch = response.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      return JSON.parse(jsonMatch[0]);
-    }
+    return JSON.parse(response.trim());
   } catch (e) {
-    // If JSON parsing fails, return as text
+    // Not pure JSON, try extraction strategies
   }
-  
+
+  // Strategy 2: Look for JSON inside a fenced code block (```json ... ``` or ``` ... ```)
+  const fencedMatch = response.match(/```(?:json)?\s*\n(\{[\s\S]*?\})\s*\n```/);
+  if (fencedMatch) {
+    try {
+      return JSON.parse(fencedMatch[1]);
+    } catch (e) {
+      // Fenced block wasn't valid JSON, continue
+    }
+  }
+
+  // Strategy 3: Find balanced top-level braces by tracking depth
+  const start = response.indexOf('{');
+  if (start !== -1) {
+    let depth = 0;
+    for (let i = start; i < response.length; i++) {
+      if (response[i] === '{') depth++;
+      else if (response[i] === '}') depth--;
+      if (depth === 0) {
+        try {
+          return JSON.parse(response.substring(start, i + 1));
+        } catch (e) {
+          // Balanced braces but not valid JSON, continue
+          break;
+        }
+      }
+    }
+  }
+
+  // Fallback: return raw text
+  console.warn('Warning: Could not parse structured JSON from Gemini response');
   return {
     summary: response,
     issues: [],

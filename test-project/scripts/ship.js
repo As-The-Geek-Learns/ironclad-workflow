@@ -19,7 +19,7 @@
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
-const { execSync } = require('child_process');
+const { execSync, execFileSync } = require('child_process');
 
 // Configuration
 const DEFAULT_STATE_PATH = '.workflow/state/verify-state.json';
@@ -181,20 +181,27 @@ All ${integrityResults.verified} files match their verified hashes.
 - [ ] Human review completed
 `;
 
-  // Create the PR
+  // Create the PR using execFileSync to avoid shell escaping issues
   const prTitle = `[Verified] ${branch}`;
-  const createCmd = `gh pr create --title "${prTitle}" --body "${prBody.replace(/"/g, '\\"')}" --base ${defaultBranch}`;
-  
-  const result = runCommand(createCmd, options.dryRun);
-  
-  if (result.success) {
+  const ghArgs = ['pr', 'create', '--title', prTitle, '--body', prBody, '--base', defaultBranch];
+
+  if (options.dryRun) {
+    console.log(`[DRY RUN] Would execute: gh ${ghArgs.join(' ')}`);
+    return true;
+  }
+
+  try {
+    const output = execFileSync('gh', ghArgs, {
+      encoding: 'utf-8',
+      stdio: ['pipe', 'pipe', 'pipe']
+    });
     console.log('Pull request created successfully!');
-    if (result.output) {
-      console.log(`PR URL: ${result.output}`);
+    if (output && output.trim()) {
+      console.log(`PR URL: ${output.trim()}`);
     }
     return true;
-  } else {
-    console.error('Failed to create pull request:', result.error);
+  } catch (error) {
+    console.error('Failed to create pull request:', error.stderr?.trim() || error.message);
     return false;
   }
 }
