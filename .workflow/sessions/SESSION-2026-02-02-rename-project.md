@@ -28,6 +28,8 @@ Renamed the GitHub repository from `WorkflowExperiment` to `ironclad-workflow` a
 | 9 | Verify no stale references remain | Done | `grep` for both old strings returned 0 matches |
 | 10 | Run `npm run verify:no-ai` | Done | All checks passed |
 | 11 | Commit and push | Done | `d7f17a1` — 7 files changed, 11 insertions, 11 deletions |
+| 12 | Update GitHub repo description | Done | Prefixed with "Ironclad Workflow —" |
+| 13 | Add GitHub repo topics | Done | `workflow`, `developer-tools`, `code-review`, `gemini`, `nodejs`, `ai-review`, `verification` |
 
 ---
 
@@ -50,6 +52,11 @@ test-project/package.json                              # Description field
 **What:** Renamed repo from `WorkflowExperiment` to `ironclad-workflow`
 **Why:** Align repo name with project identity — "WorkflowExperiment" was a placeholder
 **How:** `gh repo rename ironclad-workflow --yes` — GitHub automatically updated the remote URL
+
+#### GitHub Repo Description & Topics
+**What:** Updated repo description to include "Ironclad Workflow" prefix; added 7 topic tags
+**Why:** Discoverability and consistent branding on GitHub
+**How:** `gh repo edit --description` and `gh repo edit --add-topic`
 
 #### String Replacements (13 occurrences across 7 files)
 **What:** Replaced two stale name patterns everywhere
@@ -93,7 +100,6 @@ test-project/package.json                              # Description field
 ## Next Steps
 
 1. Adopt the new name in any external references (blog posts, bookmarks, etc.)
-2. Consider adding GitHub repo topics for discoverability under the new name
 
 ---
 
