@@ -228,21 +228,28 @@ function readFilesContent(filePaths) {
   return contents;
 }
 
+// Sanitize file content for safe inclusion in API requests
+// (validates text is printable UTF-8, strips null bytes)
+function sanitizeFileContent(content) {
+  if (typeof content !== 'string') return '';
+  return content.replace(/\0/g, '');
+}
+
 function buildCodeContext(files, diff) {
   let context = '';
-  
+
   if (diff && options.useDiff) {
-    context = '## Git Diff (Changes to Review)\n\n```diff\n' + diff + '\n```\n\n';
+    context = '## Git Diff (Changes to Review)\n\n```diff\n' + sanitizeFileContent(diff) + '\n```\n\n';
   }
-  
+
   if (files.length > 0) {
     context += '## Source Files\n\n';
     for (const file of files) {
       const ext = path.extname(file.path).slice(1) || 'text';
-      context += '### ' + file.path + '\n\n```' + ext + '\n' + file.content + '\n```\n\n';
+      context += '### ' + sanitizeForLog(file.path) + '\n\n```' + ext + '\n' + sanitizeFileContent(file.content) + '\n```\n\n';
     }
   }
-  
+
   return context;
 }
 
@@ -316,7 +323,7 @@ async function callGemini(prompt, codeContext) {
   });
 }
 
-function parseGeminiResponse(response) {
+function extractJsonFromResponse(response) {
   // Strategy 1: Try parsing the full response as JSON directly
   try {
     return JSON.parse(response.trim());
@@ -352,13 +359,49 @@ function parseGeminiResponse(response) {
     }
   }
 
-  // Fallback: return raw text
-  console.warn('Warning: Could not parse structured JSON from Gemini response');
-  return {
-    summary: response,
+  return null;
+}
+
+// Parse and validate Gemini response, returning only expected fields
+// (reconstructs a clean object to prevent untrusted data from flowing to file writes)
+function parseGeminiResponse(response) {
+  const parsed = extractJsonFromResponse(response);
+
+  if (!parsed) {
+    console.warn('Warning: Could not parse structured JSON from Gemini response');
+    return {
+      summary: sanitizeForLog(response.substring(0, 2000)),
+      issues: [],
+      raw: true
+    };
+  }
+
+  // Reconstruct with only expected fields and safe string values
+  const clean = {
+    summary: typeof parsed.summary === 'string' ? String(parsed.summary) : '',
     issues: [],
-    raw: true
+    raw: false
   };
+
+  if (parsed.overallRisk) clean.overallRisk = String(parsed.overallRisk);
+  if (parsed.overallQuality) clean.overallQuality = String(parsed.overallQuality);
+  if (Array.isArray(parsed.positives)) clean.positives = parsed.positives.map(String);
+  if (Array.isArray(parsed.strengths)) clean.strengths = parsed.strengths.map(String);
+
+  if (Array.isArray(parsed.issues)) {
+    clean.issues = parsed.issues.map(function(issue) {
+      return {
+        severity: typeof issue.severity === 'string' ? String(issue.severity) : undefined,
+        priority: typeof issue.priority === 'string' ? String(issue.priority) : undefined,
+        location: typeof issue.location === 'string' ? String(issue.location) : '',
+        description: typeof issue.description === 'string' ? String(issue.description) : '',
+        recommendation: typeof issue.recommendation === 'string' ? String(issue.recommendation) : undefined,
+        suggestion: typeof issue.suggestion === 'string' ? String(issue.suggestion) : undefined
+      };
+    });
+  }
+
+  return clean;
 }
 
 // Main review process
@@ -442,8 +485,8 @@ async function main() {
       console.log('No security issues found.');
     }
   } catch (error) {
-    console.error('Security review failed: ' + error.message);
-    results.securityReview = { error: error.message };
+    console.error('Security review failed: ' + sanitizeForLog(error.message));
+    results.securityReview = { error: String(error.message) };
   }
 
   // Quality Review (unless security-only mode)
@@ -470,8 +513,8 @@ async function main() {
         console.log('No quality issues found.');
       }
     } catch (error) {
-      console.error('Quality review failed: ' + error.message);
-      results.qualityReview = { error: error.message };
+      console.error('Quality review failed: ' + sanitizeForLog(error.message));
+      results.qualityReview = { error: String(error.message) };
     }
   }
 
