@@ -25,7 +25,7 @@
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
-const { execSync, spawn } = require('child_process');
+const { execSync, execFileSync, spawn } = require('child_process');
 
 // Configuration
 const DEFAULT_EXTENSIONS = ['.js', '.jsx', '.ts', '.tsx', '.css', '.json'];
@@ -190,8 +190,9 @@ function runAiReview() {
   console.log('\nRunning AI Code Review (Gemini)...');
   
   try {
-    const aiArgs = options.securityFocus ? '--security-focus' : '';
-    const result = execSync('node ' + aiReviewPath + ' ' + aiArgs, {
+    const aiArgs = options.securityFocus ? ['--security-focus'] : [];
+    // Use execFileSync to avoid shell interpretation of the path
+    const result = execFileSync(process.execPath, [aiReviewPath, ...aiArgs], {
       encoding: 'utf-8',
       stdio: ['pipe', 'pipe', 'pipe'],
       env: process.env,

@@ -131,6 +131,21 @@ Respond in JSON format:
 }`;
 
 // Utility functions
+
+// Sanitize strings before logging to prevent log injection attacks
+// (strips control characters that could manipulate terminal output)
+function sanitizeForLog(value) {
+  if (typeof value !== 'string') return String(value);
+  return value.replace(/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f\r]/g, '');
+}
+
+// Validate that a file path is within the project directory
+function isPathWithinProject(filePath) {
+  const resolved = path.resolve(filePath);
+  const projectRoot = path.resolve('.');
+  return resolved.startsWith(projectRoot + path.sep) || resolved === projectRoot;
+}
+
 function getGitDiff() {
   try {
     // Get diff of staged and unstaged changes
@@ -185,25 +200,31 @@ function findSourceFiles(baseDir) {
 
 function readFilesContent(filePaths) {
   const contents = [];
-  
+
   for (const filePath of filePaths) {
+    // Validate file path stays within project directory before reading
+    if (!isPathWithinProject(filePath)) {
+      console.warn('Skipping file outside project directory: ' + sanitizeForLog(filePath));
+      continue;
+    }
+
     try {
       let content = fs.readFileSync(filePath, 'utf-8');
-      
+
       // Truncate very large files
       if (content.length > MAX_FILE_SIZE) {
         content = content.substring(0, MAX_FILE_SIZE) + '\n\n... [truncated] ...';
       }
-      
+
       contents.push({
         path: filePath,
         content: content
       });
     } catch (error) {
-      console.warn('Could not read ' + filePath + ': ' + error.message);
+      console.warn('Could not read ' + sanitizeForLog(filePath) + ': ' + sanitizeForLog(error.message));
     }
   }
-  
+
   return contents;
 }
 
@@ -409,13 +430,13 @@ async function main() {
     
     if (results.securityReview.overallRisk) {
       results.summary.securityRisk = results.securityReview.overallRisk;
-      console.log('Security Risk: ' + results.securityReview.overallRisk);
+      console.log('Security Risk: ' + sanitizeForLog(results.securityReview.overallRisk));
     }
-    
+
     if (results.securityReview.issues && results.securityReview.issues.length > 0) {
       console.log('Security Issues Found: ' + results.securityReview.issues.length);
       for (const issue of results.securityReview.issues) {
-        console.log('  [' + issue.severity + '] ' + issue.location + ': ' + issue.description);
+        console.log('  [' + sanitizeForLog(issue.severity) + '] ' + sanitizeForLog(issue.location) + ': ' + sanitizeForLog(issue.description));
       }
     } else {
       console.log('No security issues found.');
@@ -437,13 +458,13 @@ async function main() {
       
       if (results.qualityReview.overallQuality) {
         results.summary.codeQuality = results.qualityReview.overallQuality;
-        console.log('Code Quality: ' + results.qualityReview.overallQuality);
+        console.log('Code Quality: ' + sanitizeForLog(results.qualityReview.overallQuality));
       }
-      
+
       if (results.qualityReview.issues && results.qualityReview.issues.length > 0) {
         console.log('Quality Issues Found: ' + results.qualityReview.issues.length);
         for (const issue of results.qualityReview.issues) {
-          console.log('  [' + issue.priority + '] ' + issue.location + ': ' + issue.description);
+          console.log('  [' + sanitizeForLog(issue.priority) + '] ' + sanitizeForLog(issue.location) + ': ' + sanitizeForLog(issue.description));
         }
       } else {
         console.log('No quality issues found.');
@@ -463,14 +484,21 @@ async function main() {
   
   results.summary.passesReview = securityPass && qualityPass;
 
+  // Validate output path stays within project directory
+  const resolvedOutput = path.resolve(options.outputPath);
+  if (!resolvedOutput.startsWith(path.resolve('.') + path.sep)) {
+    console.error('ERROR: Output path must be within project directory');
+    process.exit(1);
+  }
+
   // Ensure output directory exists
-  const outputDir = path.dirname(options.outputPath);
+  const outputDir = path.dirname(resolvedOutput);
   if (!fs.existsSync(outputDir)) {
     fs.mkdirSync(outputDir, { recursive: true });
   }
 
-  // Write results
-  fs.writeFileSync(options.outputPath, JSON.stringify(results, null, 2));
+  // Write results (serialized from our own structured object, not raw API response)
+  fs.writeFileSync(resolvedOutput, JSON.stringify(results, null, 2));
 
   // Print summary
   console.log('\n' + '='.repeat(60));
