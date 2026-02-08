@@ -21,7 +21,7 @@ Inspired by [Claudikins Kernel](https://github.com/elb-pr/claudikins-kernel) and
      │               │               │               │
      ▼               ▼               ▼               ▼
   plan.md        code +          AI review +     PR + merge
-  approved       session.md      verify-state     
+  approved       session.md      verify-state
 ```
 
 ### Phase 1: PLAN
@@ -187,8 +187,9 @@ your-project/
 │   │   ├── session-template.md
 │   │   └── pr-template.md
 │   ├── checklists/              # Review checklists
-│   │   ├── security-review.md
-│   │   └── verify-checklist.md
+│   │   ├── verify-checklist.md       # Per-change verification gates
+│   │   ├── security-review.md        # Per-change security review
+│   │   └── pre-release-checklist.md  # Full-app pre-release review
 │   ├── sessions/                # Active session documents
 │   │   └── SESSION-YYYY-MM-DD-slug/
 │   │       ├── plan.md
@@ -257,6 +258,17 @@ The workflow enforces security through:
 2. **AI Review** - Automated security vulnerability detection
 3. **Verification Phase** - Security checklist + npm audit
 4. **Shipping Phase** - File integrity prevents unverified changes
+5. **Pre-Release Gate** - Comprehensive checklist before releasing to users
+
+### Per-Change vs. Pre-Release Security
+
+| Checklist | When | Scope |
+|-----------|------|-------|
+| `security-review.md` | Every PR / code change | Code-level: injection, auth, data handling |
+| `pre-release-checklist.md` | Before first release or major versions | Full-app: supply chain, infrastructure, CI/CD, docs |
+
+Think of it this way: `security-review.md` inspects each weld on the bridge.
+`pre-release-checklist.md` load-tests the whole bridge before opening it to traffic.
 
 ## Human Checkpoints
 
@@ -300,7 +312,7 @@ Modify the review prompts in `ai-review.js` to include project-specific concerns
   env:
     GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
   run: node scripts/verify.js
-  
+
 - name: Check Ship Ready
   run: node scripts/ship.js --dry-run
 ```
