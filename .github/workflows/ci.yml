@@ -1,0 +1,84 @@
+# =============================================================================
+# CI Workflow for ironclad-workflow
+# =============================================================================
+# Runs on every push to main and on all pull requests.
+# Checks code quality and security for the workflow scripts.
+# =============================================================================
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Restrict permissions to minimum required
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ===========================================================================
+  # Code Quality
+  # ===========================================================================
+  quality:
+    name: Code Quality
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Validate scripts syntax
+        run: |
+          for file in scripts/*.js; do
+            echo "Checking $file..."
+            node --check "$file"
+          done
+
+  # ===========================================================================
+  # Security Scan
+  # ===========================================================================
+  security-scan:
+    name: Security Scan (Semgrep)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Semgrep
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: >-
+            p/security-audit
+            p/javascript
+            p/secrets
+
+  # ===========================================================================
+  # Secrets Scan
+  # ===========================================================================
+  secrets-scan:
+    name: Secrets Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
