@@ -52,6 +52,19 @@ ironclad-workflow executes scripts that interact with:
 - **CI/CD Security**: Automated Semgrep + Gitleaks checks on every PR
 - **Minimal Permissions**: GitHub Actions use read-only permissions by default
 
+## CI/CD Security Improvements (Feb 2026)
+
+### Semgrep Action Pinning
+- Semgrep v1 action pinned to commit SHA `713efdd345f3035192eaa63f56867b88e63e4e5d` for reproducibility
+- Prevents supply chain attacks via floating version tags
+- Ensures deterministic security scanning across all CI runs
+
+### Gitleaks Enforcement
+- Gitleaks `continue-on-error` removed to fail CI on secret detection
+- Added `.gitleaks.toml` allowlist configuration to reduce false positives
+- Secrets scanning now blocks merges instead of silently passing
+- Review `.gitleaks.toml` and customize allowlist rules for your repository
+
 ## Contact
 
 For security concerns: james@astgl.com
